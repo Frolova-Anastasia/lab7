@@ -1,0 +1,15 @@
+/app/shared/src/main/java/data/Organization.java
+/app/shared/src/main/java/exceptions/WrongNumberOfArgsException.java
+/app/shared/src/main/java/data/Coordinates.java
+/app/shared/src/main/java/requests/Request.java
+/app/shared/src/main/java/responses/ErrorResponse.java
+/app/shared/src/main/java/data/ZonedDateTimeAdapter.java
+/app/shared/src/main/java/data/OrganizationType.java
+/app/shared/src/main/java/responses/SuccessResponse.java
+/app/shared/src/main/java/utility/IdManager.java
+/app/shared/src/main/java/data/Product.java
+/app/shared/src/main/java/data/Products.java
+/app/shared/src/main/java/exceptions/EndInputException.java
+/app/shared/src/main/java/data/UnitOfMeasure.java
+/app/shared/src/main/java/utility/CommandWrapper.java
+/app/shared/src/main/java/responses/Response.java

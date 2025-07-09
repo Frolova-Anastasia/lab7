@@ -1,0 +1,15 @@
+exceptions/EndInputException.class
+responses/ErrorResponse.class
+data/Coordinates.class
+data/ZonedDateTimeAdapter.class
+requests/Request.class
+responses/SuccessResponse.class
+responses/Response.class
+exceptions/WrongNumberOfArgsException.class
+data/Product.class
+data/Products.class
+data/Organization.class
+data/UnitOfMeasure.class
+data/OrganizationType.class
+utility/CommandWrapper.class
+utility/IdManager.class

@@ -1,8 +1,11 @@
+import input.ClientConsole;
+import input.ConsoleInputProvider;
+import input.InputProvider;
+import input.ProductBuilder;
 import utility.*;
 
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.util.NoSuchElementException;
 
 /**
  * Точка входа клиентского приложения.
@@ -17,8 +20,8 @@ public class Client {
      */
     public static void main(String[] args){
         try{
-            InetAddress serverAddress = InetAddress.getByName("server");
-            int serverPort = 12345;
+            InetAddress serverAddress = InetAddress.getByName("localhost");
+            int serverPort = 12348;
             DatagramSocket socket = new DatagramSocket();
 
             CommandSender sender = new CommandSender(socket, serverAddress, serverPort);

@@ -10,9 +10,13 @@ import java.io.IOException;
 
 public class ClearCommand implements ClientCommand{
     private final CommandSender sender;
+    private final String username;
+    private final String passwordHash;
 
-    public ClearCommand(CommandSender sender) {
+    public ClearCommand(CommandSender sender, String username, String passwordHash) {
         this.sender = sender;
+        this.username = username;
+        this.passwordHash = passwordHash;
     }
 
     @Override
@@ -28,7 +32,7 @@ public class ClearCommand implements ClientCommand{
     @Override
     public Response execute(String[] args) throws EndInputException, IOException, ClassNotFoundException, WrongNumberOfArgsException {
         NumberArgsChecker.checkArgs(args, 0);
-        Request request = new Request();
+        Request request = new Request(username, passwordHash);
         sender.send("clear", request);
         return sender.receive();
     }

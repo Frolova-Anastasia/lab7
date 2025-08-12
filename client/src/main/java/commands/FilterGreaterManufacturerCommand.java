@@ -7,17 +7,21 @@ import requests.Request;
 import responses.ErrorResponse;
 import responses.Response;
 import utility.CommandSender;
-import utility.ProductBuilder;
+import input.ProductBuilder;
 
 import java.io.IOException;
 
 public class FilterGreaterManufacturerCommand implements ClientCommand{
     private final CommandSender sender;
     private final ProductBuilder builder;
+    private final String username;
+    private final String passwordHash;
 
-    public FilterGreaterManufacturerCommand(CommandSender sender, ProductBuilder builder) {
+    public FilterGreaterManufacturerCommand(CommandSender sender, ProductBuilder builder, String username, String passwordHash) {
         this.sender = sender;
         this.builder = builder;
+        this.username = username;
+        this.passwordHash = passwordHash;
     }
 
     @Override
@@ -35,7 +39,7 @@ public class FilterGreaterManufacturerCommand implements ClientCommand{
       try {
           NumberArgsChecker.checkArgs(args, 0);
           Organization org = builder.buildOrganization();
-          Request request = new Request();
+          Request request = new Request(username, passwordHash);
           request.setOrganization(org);
           sender.send("filter_greater_than_manufacturer", request);
           return sender.receive();

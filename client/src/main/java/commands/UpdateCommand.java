@@ -7,17 +7,21 @@ import requests.Request;
 import responses.ErrorResponse;
 import responses.Response;
 import utility.CommandSender;
-import utility.ProductBuilder;
+import input.ProductBuilder;
 
 import java.io.IOException;
 
 public class UpdateCommand implements ClientCommand{
     private final CommandSender sender;
     private final ProductBuilder builder;
+    private final String username;
+    private final String passwordHash;
 
-    public UpdateCommand(CommandSender sender, ProductBuilder builder) {
+    public UpdateCommand(CommandSender sender, ProductBuilder builder, String username, String passwordHash) {
         this.sender = sender;
         this.builder = builder;
+        this.username = username;
+        this.passwordHash = passwordHash;
     }
 
     @Override
@@ -42,7 +46,7 @@ public class UpdateCommand implements ClientCommand{
             System.out.println("Введите новые данные для продукта с ID " + id + ":");
             Product newProduct = builder.builProduct();
 
-            Request request = new Request(args);
+            Request request = new Request(username, passwordHash, args);
             request.setProduct(newProduct);
 
             sender.send("update", request);

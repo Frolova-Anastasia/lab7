@@ -1,21 +1,25 @@
 package commands;
 
 import data.Product;
-import data.Products;
+import db.AuthManager;
 import exceptions.EndInputException;
 import exceptions.WrongNumberOfArgsException;
 import requests.Request;
+import responses.ErrorResponse;
 import responses.Response;
 import responses.SuccessResponse;
 import utility.CollectionManager;
 
+import java.sql.SQLException;
 import java.util.List;
 
 public class ShowCommand implements Command{
     private final CollectionManager collectionManager;
+    private final AuthManager authManager;
 
-    public ShowCommand(CollectionManager collectionManager) {
+    public ShowCommand(CollectionManager collectionManager, AuthManager authManager) {
         this.collectionManager = collectionManager;
+        this.authManager = authManager;
     }
 
     @Override
@@ -29,7 +33,14 @@ public class ShowCommand implements Command{
     }
 
     @Override
-    public Response execute(Request request) throws WrongNumberOfArgsException, EndInputException {
+    public Response execute(Request request) throws WrongNumberOfArgsException, EndInputException, SQLException {
+        String username = request.getUsername();
+        String passwordHash = request.getPasswordHash();
+
+        if (!authManager.login(username, passwordHash)) {
+            return new ErrorResponse("Ошибка авторизации: неверный логин или пароль.");
+        }
+
         List<Product> products = collectionManager.getProducts();
         if(products.isEmpty()){
             return new SuccessResponse("Коллекция пуста");

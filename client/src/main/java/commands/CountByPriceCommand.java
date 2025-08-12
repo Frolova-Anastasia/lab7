@@ -11,9 +11,13 @@ import java.io.IOException;
 
 public class CountByPriceCommand implements ClientCommand{
     private final CommandSender sender;
+    private final String username;
+    private final String passwordHash;
 
-    public CountByPriceCommand(CommandSender sender) {
+    public CountByPriceCommand(CommandSender sender, String username, String passwordHash) {
         this.sender = sender;
+        this.username = username;
+        this.passwordHash = passwordHash;
     }
 
     @Override
@@ -31,7 +35,7 @@ public class CountByPriceCommand implements ClientCommand{
         try {
             NumberArgsChecker.checkArgs(args,1);
             Float.parseFloat(args[0]);
-            Request request = new Request(args);
+            Request request = new Request(username, passwordHash, args);
             sender.send("count_by_price", request);
             return sender.receive();
         }catch (WrongNumberOfArgsException e) {

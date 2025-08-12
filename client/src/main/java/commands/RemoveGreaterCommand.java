@@ -7,17 +7,21 @@ import requests.Request;
 import responses.ErrorResponse;
 import responses.Response;
 import utility.CommandSender;
-import utility.ProductBuilder;
+import input.ProductBuilder;
 
 import java.io.IOException;
 
 public class RemoveGreaterCommand implements ClientCommand{
     private final CommandSender sender;
     private final ProductBuilder builder;
+    private final String username;
+    private final String passwordHash;
 
-    public RemoveGreaterCommand(CommandSender sender, ProductBuilder builder) {
+    public RemoveGreaterCommand(CommandSender sender, ProductBuilder builder, String username, String passwordHash) {
         this.sender = sender;
         this.builder = builder;
+        this.username = username;
+        this.passwordHash = passwordHash;
     }
 
     @Override
@@ -36,7 +40,7 @@ public class RemoveGreaterCommand implements ClientCommand{
             NumberArgsChecker.checkArgs(args, 0);
             Product product = builder.builProduct();
 
-            Request request = new Request();
+            Request request = new Request(username, passwordHash);
             request.setProduct(product);
 
             sender.send("remove_greater", request);

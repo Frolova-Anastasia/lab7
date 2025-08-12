@@ -30,18 +30,22 @@ public class CommandSender {
      * @throws IOException если произошла ошибка при передаче
      */
     public void send(String commandName, Request request) throws IOException {
+        if (UserSession.isAuthorized()) {
+            request.setUsername(UserSession.getUsername());
+            request.setPasswordHash(UserSession.getPasswordHash());
+        }
+
         CommandWrapper wrapper = new CommandWrapper(commandName, request);
-        //Сериализация
         ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
         ObjectOutputStream out = new ObjectOutputStream(byteStream);
         out.writeObject(wrapper);
         out.flush();
-        byte[] sendData = byteStream.toByteArray();
 
-        //Отправка на сервер
+        byte[] sendData = byteStream.toByteArray();
         DatagramPacket packet = new DatagramPacket(sendData, sendData.length, serverAdd, serverPort);
         socket.send(packet);
     }
+
 
     /**
      * Получает и десериализует ответ от сервера.

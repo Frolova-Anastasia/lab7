@@ -5,21 +5,20 @@ import exceptions.WrongNumberOfArgsException;
 import responses.ErrorResponse;
 import responses.Response;
 import responses.SuccessResponse;
-import utility.ClientConsole;
+import input.ClientConsole;
 import utility.CommandManager;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class ExecuteScriptCommand implements ClientCommand{
     private final CommandManager commandManager;
     private final ClientConsole console;
     private final Set<Path> activeScripts = new HashSet<>();
+
 
     public ExecuteScriptCommand(CommandManager commandManager, ClientConsole console) {
         this.commandManager = commandManager;

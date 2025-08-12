@@ -11,9 +11,13 @@ import java.io.IOException;
 
 public class PrintUniqueManufacturer implements ClientCommand{
     private final CommandSender sender;
+    private final String username;
+    private final String passwordHash;
 
-    public PrintUniqueManufacturer(CommandSender sender) {
+    public PrintUniqueManufacturer(CommandSender sender, String username, String passwordHash) {
         this.sender = sender;
+        this.username = username;
+        this.passwordHash = passwordHash;
     }
 
     @Override
@@ -30,7 +34,7 @@ public class PrintUniqueManufacturer implements ClientCommand{
     public Response execute(String[] args) throws EndInputException, IOException, ClassNotFoundException, WrongNumberOfArgsException {
         try {
             NumberArgsChecker.checkArgs(args, 0);
-            Request request = new Request();
+            Request request = new Request(username, passwordHash);
             sender.send("print_unique_manufacturer", request);
             return sender.receive();
         }catch (WrongNumberOfArgsException e){

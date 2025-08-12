@@ -11,9 +11,13 @@ import java.io.IOException;
 
 public class ShuffleCommand implements ClientCommand{
     private final CommandSender sender;
+    private final String username;
+    private final String passwordHash;
 
-    public ShuffleCommand(CommandSender sender) {
+    public ShuffleCommand(CommandSender sender, String username, String passwordHash) {
         this.sender = sender;
+        this.username = username;
+        this.passwordHash = passwordHash;
     }
 
     @Override
@@ -30,7 +34,7 @@ public class ShuffleCommand implements ClientCommand{
     public Response execute(String[] args) throws EndInputException, IOException, ClassNotFoundException, WrongNumberOfArgsException {
         try {
             NumberArgsChecker.checkArgs(args, 0);
-            Request request = new Request(); // без аргументов
+            Request request = new Request(username, passwordHash); // без аргументов
             sender.send("shuffle", request);
             return sender.receive();
         } catch (WrongNumberOfArgsException e) {

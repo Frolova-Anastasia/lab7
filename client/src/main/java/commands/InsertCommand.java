@@ -3,21 +3,25 @@ package commands;
 import data.Product;
 import exceptions.EndInputException;
 import exceptions.WrongNumberOfArgsException;
+import input.ProductBuilder;
 import requests.Request;
 import responses.ErrorResponse;
 import responses.Response;
 import utility.CommandSender;
-import utility.ProductBuilder;
 
 import java.io.IOException;
 
 public class InsertCommand implements ClientCommand{
     private final CommandSender sender;
     private final ProductBuilder builder;
+    private final String username;
+    private final String passwordHash;
 
-    public InsertCommand(CommandSender sender, ProductBuilder builder) {
+    public InsertCommand(CommandSender sender, ProductBuilder builder, String username, String passwordHash) {
         this.sender = sender;
         this.builder = builder;
+        this.username = username;
+        this.passwordHash = passwordHash;
     }
 
     @Override
@@ -40,7 +44,7 @@ public class InsertCommand implements ClientCommand{
             }
             Product product = builder.builProduct();
 
-            Request request = new Request(args);
+            Request request = new Request(username, passwordHash, args);
             request.setProduct(product);
             sender.send("insert", request);
             return sender.receive();

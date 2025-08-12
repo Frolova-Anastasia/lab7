@@ -1,5 +1,6 @@
 package commands;
 
+import db.AuthManager;
 import exceptions.EndInputException;
 import exceptions.WrongNumberOfArgsException;
 import requests.Request;
@@ -8,13 +9,17 @@ import responses.Response;
 import responses.SuccessResponse;
 import utility.CollectionManager;
 
+
+import java.sql.SQLException;
 import java.util.Objects;
 
 public class CountByPriceCommand implements Command{
     private final CollectionManager collectionManager;
+    private final AuthManager authManager;
 
-    public CountByPriceCommand(CollectionManager collectionManager) {
+    public CountByPriceCommand(CollectionManager collectionManager, AuthManager authManager) {
         this.collectionManager = collectionManager;
+        this.authManager = authManager;
     }
 
     @Override
@@ -28,7 +33,10 @@ public class CountByPriceCommand implements Command{
     }
 
     @Override
-    public Response execute(Request request) throws WrongNumberOfArgsException, EndInputException {
+    public Response execute(Request request) throws WrongNumberOfArgsException, EndInputException, SQLException {
+        if (!authManager.login(request.getUsername(), request.getPasswordHash())) {
+            return new ErrorResponse("Ошибка авторизации.");
+        }
         String[] args = request.getArgs();
         if(args == null || args.length != 1){
             return new ErrorResponse("Команда требует один аргуиент - цену (вещественное число через точку");

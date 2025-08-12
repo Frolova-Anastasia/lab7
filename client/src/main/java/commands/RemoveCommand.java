@@ -11,9 +11,13 @@ import java.io.IOException;
 
 public class RemoveCommand implements ClientCommand{
     private final CommandSender sender;
+    private final String username;
+    private final String passwordHash;
 
-    public RemoveCommand(CommandSender sender) {
+    public RemoveCommand(CommandSender sender, String username, String passwordHash) {
         this.sender = sender;
+        this.username = username;
+        this.passwordHash = passwordHash;
     }
 
     @Override
@@ -35,7 +39,7 @@ public class RemoveCommand implements ClientCommand{
                 return new ErrorResponse("ID должен быть положительным числом");
             }
 
-            Request request = new Request(args);
+            Request request = new Request(username, passwordHash, args);
             sender.send("remove", request);
             return sender.receive();
 

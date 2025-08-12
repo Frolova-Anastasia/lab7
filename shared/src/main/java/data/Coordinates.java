@@ -1,11 +1,8 @@
 package data;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 
 import java.io.Serializable;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 public class Coordinates  implements Serializable {
     private int x; //Максимальное значение поля: 931
     private Long y; //Поле не может быть null

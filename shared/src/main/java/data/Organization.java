@@ -1,12 +1,10 @@
 package data;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
+
 
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 public class Organization implements Comparable<Organization>, Serializable {
     @Serial
     private static final long serialVersionUID = 1L;

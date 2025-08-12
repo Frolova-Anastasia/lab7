@@ -11,6 +11,8 @@ import java.io.Serializable;
  */
 public class Request implements Serializable {
     private final String[] args;
+    private String username;
+    private String passwordHash;
     private Product product;
     private Organization organization;
 
@@ -18,8 +20,18 @@ public class Request implements Serializable {
      * Конструктор с аргументами команды.
      * @param args строковые аргументы, переданные с командой
      */
-    public Request(String... args) {
+    public Request(String username, String passwordHash, String... args) {
         this.args = args;
+        this.username = username;
+        this.passwordHash = passwordHash;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getPasswordHash() {
+        return passwordHash;
     }
 
     public String[] getArgs() {
@@ -42,4 +54,11 @@ public class Request implements Serializable {
         this.organization = organization;
     }
 
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
 }

@@ -10,7 +10,6 @@ import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 public class Product implements Serializable, Comparable<Product> {
     @Serial
     private static final long serialVersionUID = 1L; //ID класса, чтобы нормально (де)сериализовалось при изменении структуры
@@ -18,13 +17,12 @@ public class Product implements Serializable, Comparable<Product> {
     private Integer id; //Поле не может быть null, Значение поля должно быть больше 0, Значение этого поля должно быть уникальным, Значение этого поля должно генерироваться автоматически
     private String name; //Поле не может быть null, Строка не может быть пустой
     private Coordinates coordinates; //Поле не может быть null
-    @XmlElement(name = "creationDate")
-    @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
     private java.time.ZonedDateTime creationDate; //Поле не может быть null, Значение этого поля должно генерироваться автоматически
     private Float price; //Поле может быть null, Значение поля должно быть больше 0
     private UnitOfMeasure unitOfMeasure; //Поле может быть null
     private Organization manufacturer; //Поле может быть null
 
+    private int ownerId;
 
     public Product(Integer id, String name, Coordinates coordinates, Float price, UnitOfMeasure unitOfMeasure, Organization manufacturer, ZonedDateTime creationDate) {
         this.id = id;
@@ -37,6 +35,14 @@ public class Product implements Serializable, Comparable<Product> {
     }
 
     public Product() {
+    }
+
+    public int getOwnerId() {
+        return ownerId;
+    }
+
+    public void setOwnerId(int ownerId) {
+        this.ownerId = ownerId;
     }
 
     public void setName(String name) {

@@ -1,7 +1,5 @@
 import commands.Command;
 import db.*;
-import exceptions.EndInputException;
-import exceptions.WrongNumberOfArgsException;
 import requests.Request;
 import responses.ErrorResponse;
 import responses.Response;
@@ -13,7 +11,7 @@ import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.sql.SQLException;
+import java.net.SocketException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.*;
@@ -25,103 +23,147 @@ import java.util.logging.*;
 public class Server {
     private static final int port = 12348;
     private static final Logger logger = Logger.getLogger(Server.class.getName());
+    private static volatile boolean running = true; // флаг работы
 
     /**
      * Точка входа. Запускает сервер, настраивает логирование, регистрирует команды и слушает входящие UDP-пакеты.
      *
      * @param args аргументы командной строки (не используются)
      */
-    public static void main(String[] args){
+    public static void main(String[] args) {
         configureLogger(); // инициализация логгера
+
         try {
-            // 1. Подключение к БД
+            // Подключение к БД
             DBManager dbManager = new DBManager();
 
-            // 2. DAO
             OrganizationDAO organizationDAO = new OrganizationDAO(dbManager.getConnection());
             ProductDAO productDAO = new ProductDAO(dbManager.getConnection(), organizationDAO);
             UserDAO userDAO = new UserDAO(dbManager);
 
-            // 3. Менеджеры
-            CollectionManager collectionManager = new CollectionManager(productDAO); // теперь работает с БД
+            CollectionManager collectionManager = new CollectionManager(productDAO);
             AuthManager authManager = new AuthManager(userDAO);
-
             CommandManager commandManager = new CommandManager(collectionManager, authManager, productDAO);
 
-            // 4. Настройка пула потоков
-            ExecutorService executorService = Executors.newFixedThreadPool(
-                    Runtime.getRuntime().availableProcessors()
-            );
+            ExecutorService processPool = Executors.newCachedThreadPool(); // обработка
+            ExecutorService sendPool = Executors.newFixedThreadPool(2);    // отправка
 
-            // 5. Сокет
             DatagramSocket socket = new DatagramSocket(port);
             logger.info("Сервер запущен на порту " + port);
 
-            // 6. Хук завершения
+            // Хук завершения
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                logger.info("Сервер завершает работу...");
-                executorService.shutdown();
+                logger.info("Получен сигнал завершения. Останавливаем сервер...");
+                running = false;
+                socket.close(); // прерываем socket.receive()
+                processPool.shutdown();
+                sendPool.shutdown();
                 dbManager.close();
             }));
 
-            // 7. Основной цикл
-            while (true) {
+            // Основной цикл приёма
+            while (running) {
                 try {
                     byte[] receiveData = new byte[8192];
                     DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-                    socket.receive(receivePacket);
 
-                    // Обрабатываем запрос в пуле потоков
-                    executorService.submit(() -> {
+                    socket.receive(receivePacket); // блокируется, пока не придут данные
+
+                    processPool.submit(() -> {
                         try {
-                            processRequest(socket, receivePacket, commandManager);
+                            Response response = handleRequest(receivePacket, commandManager);
+
+                            sendPool.submit(() -> {
+                                try {
+                                    sendResponse(socket, response,
+                                            receivePacket.getAddress(),
+                                            receivePacket.getPort());
+                                } catch (IOException e) {
+                                    logger.log(Level.WARNING, "Ошибка отправки ответа", e);
+                                }
+                            });
+
                         } catch (Exception e) {
-                            logger.log(Level.WARNING, "Ошибка при обработке запроса", e);
+                            logger.log(Level.WARNING, "Ошибка обработки запроса", e);
                         }
                     });
 
+                } catch (SocketException e) {
+                    // выбрасывается при socket.close() → значит выходим из цикла
+                    if (running) {
+                        logger.log(Level.WARNING, "Ошибка при приёме пакета", e);
+                    }
                 } catch (IOException e) {
                     logger.log(Level.WARNING, "Ошибка при приёме пакета", e);
                 }
             }
+
+            logger.info("Сервер успешно остановлен.");
 
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Ошибка запуска сервера: " + e.getMessage(), e);
         }
     }
 
-    private static void processRequest(DatagramSocket socket, DatagramPacket receivePacket, CommandManager commandManager)
-            throws IOException, ClassNotFoundException, SQLException, WrongNumberOfArgsException, EndInputException {
+    private static Response handleRequest(DatagramPacket receivePacket, CommandManager commandManager) {
+        try {
+            System.out.println("[SERVER] Получен пакет, длина: " + receivePacket.getLength() +
+                    " байт от " + receivePacket.getAddress() + ":" + receivePacket.getPort());
 
-        // 1. Десериализация
-        ByteArrayInputStream byteInput = new ByteArrayInputStream(
-                receivePacket.getData(), 0, receivePacket.getLength()
-        );
-        ObjectInputStream in = new ObjectInputStream(byteInput);
-        CommandWrapper wrapper = (CommandWrapper) in.readObject();
+            //  Десериализация
+            try (ObjectInputStream in = new ObjectInputStream(
+                    new ByteArrayInputStream(receivePacket.getData(), 0, receivePacket.getLength()))) {
 
-        String name = wrapper.getCommandName();
-        Request request = wrapper.getRequest();
+                CommandWrapper wrapper = (CommandWrapper) in.readObject();
+                if (wrapper == null) {
+                    logger.warning("Получен пустой запрос (wrapper = null)");
+                    return new ErrorResponse("Ошибка: пустой запрос");
+                }
 
-        logger.info("Выполняется команда: " + name);
-        System.out.println("[SERVER] Received request from " + request.getUsername() + " with hash: " + request.getPasswordHash());
+                String name = wrapper.getCommandName();
+                Request request = wrapper.getRequest();
 
-        // 2. Выполнение
-        Command command = commandManager.getCommand(name);
-        Response response = (command != null)
-                ? command.execute(request)
-                : new ErrorResponse("Команда не найдена");
+                logger.info("Выполняется команда: " + name + " от пользователя " + request.getUsername());
 
-        // 3. Отправка ответа
+                //  Поиск команды
+                Command command = commandManager.getCommand(name);
+                if (command == null) {
+                    logger.warning("Команда '" + name + "' не найдена в CommandManager");
+                    return new ErrorResponse("Команда не найдена: " + name);
+                }
+
+                // Выполнение команды
+                Response response = command.execute(request);
+                if (response == null) {
+                    logger.warning("Команда '" + name + "' вернула null вместо ответа");
+                    return new ErrorResponse("Ошибка: команда не вернула ответ");
+                }
+
+                logger.info("Команда '" + name + "' выполнена успешно");
+                return response;
+            }
+
+        } catch (IOException e) {
+            logger.log(Level.WARNING, "Ошибка при чтении запроса: " + e.getMessage(), e);
+            return new ErrorResponse("Ошибка при чтении запроса");
+        } catch (ClassNotFoundException e) {
+            logger.log(Level.WARNING, "Ошибка десериализации объекта: " + e.getMessage(), e);
+            return new ErrorResponse("Ошибка десериализации объекта");
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Неизвестная ошибка при обработке запроса: " + e.getMessage(), e);
+            return new ErrorResponse("Внутренняя ошибка сервера");
+        }
+    }
+
+
+        private static void sendResponse(DatagramSocket socket, Response response, InetAddress clientAddress, int clientPort)
+            throws IOException {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         ObjectOutputStream out = new ObjectOutputStream(outputStream);
         out.writeObject(response);
         out.flush();
 
         byte[] sendData = outputStream.toByteArray();
-        InetAddress clientAddress = receivePacket.getAddress();
-        int clientPort = receivePacket.getPort();
-
         DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, clientAddress, clientPort);
         socket.send(sendPacket);
 
